@@ -39,24 +39,24 @@ export interface Subscription {
 
 export async function getUserByEmail(email: string): Promise<User | null> {
   const db = sql();
-  const rows = await db`SELECT * FROM oilgas.users WHERE email = ${email} LIMIT 1`;
+  const rows = (await db`SELECT * FROM oilgas.users WHERE email = ${email} LIMIT 1`) as unknown as Record<string, unknown>[];
   return (rows[0] as User) ?? null;
 }
 
 export async function getUserById(id: string): Promise<User | null> {
   const db = sql();
-  const rows = await db`SELECT * FROM oilgas.users WHERE id = ${id} LIMIT 1`;
+  const rows = (await db`SELECT * FROM oilgas.users WHERE id = ${id} LIMIT 1`) as unknown as Record<string, unknown>[];
   return (rows[0] as User) ?? null;
 }
 
 export async function createUser(email: string, passwordHash: string, name?: string): Promise<User> {
   const db = sql();
   const n = name ?? null;
-  const rows = await db`
+  const rows = (await db`
     INSERT INTO oilgas.users (email, password_hash, name)
     VALUES (${email}, ${passwordHash}, ${n})
     RETURNING *
-  `;
+  `) as unknown as Record<string, unknown>[];
   return rows[0] as User;
 }
 
@@ -65,22 +65,22 @@ export async function updateUser(id: string, data: { name?: string; company?: st
   const n = data.name ?? null;
   const c = data.company ?? null;
   const r = data.role ?? null;
-  const rows = await db`
+  const rows = (await db`
     UPDATE oilgas.users
     SET name    = COALESCE(${n}, name),
         company = COALESCE(${c}, company),
         role    = COALESCE(${r}, role)
     WHERE id = ${id}
     RETURNING *
-  `;
+  `) as unknown as Record<string, unknown>[];
   return rows[0] as User;
 }
 
 export async function getSubscriptionByUserId(userId: string): Promise<Subscription | null> {
   const db = sql();
-  const rows = await db`
+  const rows = (await db`
     SELECT * FROM oilgas.subscriptions WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 1
-  `;
+  `) as unknown as Record<string, unknown>[];
   return (rows[0] as Subscription) ?? null;
 }
 
@@ -102,7 +102,7 @@ export async function upsertSubscription(data: {
   const pStart = data.currentPeriodStart ?? null;
   const pEnd = data.currentPeriodEnd ?? null;
   const cancel = data.cancelAtPeriodEnd ?? false;
-  const rows = await db`
+  const rows = (await db`
     INSERT INTO oilgas.subscriptions
       (user_id, stripe_customer_id, stripe_subscription_id, stripe_price_id,
        plan, status, current_period_start, current_period_end, cancel_at_period_end)
@@ -118,14 +118,14 @@ export async function upsertSubscription(data: {
       cancel_at_period_end = EXCLUDED.cancel_at_period_end,
       updated_at           = NOW()
     RETURNING *
-  `;
+  `) as unknown as Record<string, unknown>[];
   return rows[0] as Subscription;
 }
 
 export async function getSubscriptionByCustomerId(customerId: string): Promise<Subscription | null> {
   const db = sql();
-  const rows = await db`
+  const rows = (await db`
     SELECT * FROM oilgas.subscriptions WHERE stripe_customer_id = ${customerId} ORDER BY created_at DESC LIMIT 1
-  `;
+  `) as unknown as Record<string, unknown>[];
   return (rows[0] as Subscription) ?? null;
 }
