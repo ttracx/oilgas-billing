@@ -1,7 +1,5 @@
 import type { NextConfig } from 'next';
-
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['bcryptjs', 'postgres'],
+  serverExternalPackages: ['bcryptjs'],
 };
-
 export default nextConfig;

@@ -1,11 +1,19 @@
-import postgres from 'postgres';
+import { neon } from '@neondatabase/serverless';
 
-function getSql() {
-  const raw = process.env.POSTGRES_URL;
-  if (!raw) throw new Error('POSTGRES_URL is not set');
-  // Strip params unsupported by the postgres npm package (channel_binding, sslmode)
-  const url = raw.split('?')[0];
-  return postgres(url, { ssl: 'require', max: 1, connect_timeout: 10 });
+function getDb() {
+  const url = process.env.POSTGRES_URL;
+  if (!url) throw new Error('POSTGRES_URL is not set');
+  return neon(url);
+}
+
+// Execute parameterized query — uses .query() not tagged templates
+async function q<T extends Record<string, unknown>>(
+  sql: string,
+  params: unknown[] = []
+): Promise<T[]> {
+  const db = getDb();
+  const result = await db.query(sql, params);
+  return result.rows as T[];
 }
 
 export interface User {
@@ -35,51 +43,40 @@ export interface Subscription {
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
-  const sql = getSql();
-  const rows = await sql<User[]>`SELECT * FROM oilgas.users WHERE email = ${email} LIMIT 1`;
-  await sql.end();
+  const rows = await q<User>('SELECT * FROM oilgas.users WHERE email = $1 LIMIT 1', [email]);
   return rows[0] ?? null;
 }
 
 export async function getUserById(id: string): Promise<User | null> {
-  const sql = getSql();
-  const rows = await sql<User[]>`SELECT * FROM oilgas.users WHERE id = ${id} LIMIT 1`;
-  await sql.end();
+  const rows = await q<User>('SELECT * FROM oilgas.users WHERE id = $1 LIMIT 1', [id]);
   return rows[0] ?? null;
 }
 
 export async function createUser(email: string, passwordHash: string, name?: string): Promise<User> {
-  const sql = getSql();
-  const rows = await sql<User[]>`
-    INSERT INTO oilgas.users (email, password_hash, name)
-    VALUES (${email}, ${passwordHash}, ${name ?? null})
-    RETURNING *
-  `;
-  await sql.end();
+  const rows = await q<User>(
+    'INSERT INTO oilgas.users (email, password_hash, name) VALUES ($1, $2, $3) RETURNING *',
+    [email, passwordHash, name ?? null]
+  );
   return rows[0];
 }
 
 export async function updateUser(id: string, data: { name?: string; company?: string; role?: string }): Promise<User> {
-  const sql = getSql();
-  const rows = await sql<User[]>`
-    UPDATE oilgas.users
-    SET
-      name    = COALESCE(${data.name ?? null}, name),
-      company = COALESCE(${data.company ?? null}, company),
-      role    = COALESCE(${data.role ?? null}, role)
-    WHERE id = ${id}
-    RETURNING *
-  `;
-  await sql.end();
+  const rows = await q<User>(
+    `UPDATE oilgas.users
+     SET name    = COALESCE($2, name),
+         company = COALESCE($3, company),
+         role    = COALESCE($4, role)
+     WHERE id = $1 RETURNING *`,
+    [id, data.name ?? null, data.company ?? null, data.role ?? null]
+  );
   return rows[0];
 }
 
 export async function getSubscriptionByUserId(userId: string): Promise<Subscription | null> {
-  const sql = getSql();
-  const rows = await sql<Subscription[]>`
-    SELECT * FROM oilgas.subscriptions WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 1
-  `;
-  await sql.end();
+  const rows = await q<Subscription>(
+    'SELECT * FROM oilgas.subscriptions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1',
+    [userId]
+  );
   return rows[0] ?? null;
 }
 
@@ -94,38 +91,34 @@ export async function upsertSubscription(data: {
   currentPeriodEnd?: Date;
   cancelAtPeriodEnd?: boolean;
 }): Promise<Subscription> {
-  const sql = getSql();
-  const rows = await sql<Subscription[]>`
-    INSERT INTO oilgas.subscriptions (
-      user_id, stripe_customer_id, stripe_subscription_id, stripe_price_id,
-      plan, status, current_period_start, current_period_end, cancel_at_period_end
-    ) VALUES (
-      ${data.userId}, ${data.stripeCustomerId},
-      ${data.stripeSubscriptionId ?? null}, ${data.stripePriceId ?? null},
-      ${data.plan ?? null}, ${data.status},
-      ${data.currentPeriodStart ?? null},
-      ${data.currentPeriodEnd ?? null},
-      ${data.cancelAtPeriodEnd ?? false}
-    )
-    ON CONFLICT (stripe_subscription_id) DO UPDATE SET
-      stripe_price_id      = EXCLUDED.stripe_price_id,
-      plan                 = EXCLUDED.plan,
-      status               = EXCLUDED.status,
-      current_period_start = EXCLUDED.current_period_start,
-      current_period_end   = EXCLUDED.current_period_end,
-      cancel_at_period_end = EXCLUDED.cancel_at_period_end,
-      updated_at           = NOW()
-    RETURNING *
-  `;
-  await sql.end();
+  const rows = await q<Subscription>(
+    `INSERT INTO oilgas.subscriptions
+       (user_id, stripe_customer_id, stripe_subscription_id, stripe_price_id,
+        plan, status, current_period_start, current_period_end, cancel_at_period_end)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     ON CONFLICT (stripe_subscription_id) DO UPDATE SET
+       stripe_price_id      = EXCLUDED.stripe_price_id,
+       plan                 = EXCLUDED.plan,
+       status               = EXCLUDED.status,
+       current_period_start = EXCLUDED.current_period_start,
+       current_period_end   = EXCLUDED.current_period_end,
+       cancel_at_period_end = EXCLUDED.cancel_at_period_end,
+       updated_at           = NOW()
+     RETURNING *`,
+    [
+      data.userId, data.stripeCustomerId, data.stripeSubscriptionId ?? null,
+      data.stripePriceId ?? null, data.plan ?? null, data.status,
+      data.currentPeriodStart ?? null, data.currentPeriodEnd ?? null,
+      data.cancelAtPeriodEnd ?? false,
+    ]
+  );
   return rows[0];
 }
 
 export async function getSubscriptionByCustomerId(customerId: string): Promise<Subscription | null> {
-  const sql = getSql();
-  const rows = await sql<Subscription[]>`
-    SELECT * FROM oilgas.subscriptions WHERE stripe_customer_id = ${customerId} ORDER BY created_at DESC LIMIT 1
-  `;
-  await sql.end();
+  const rows = await q<Subscription>(
+    'SELECT * FROM oilgas.subscriptions WHERE stripe_customer_id = $1 ORDER BY created_at DESC LIMIT 1',
+    [customerId]
+  );
   return rows[0] ?? null;
 }
