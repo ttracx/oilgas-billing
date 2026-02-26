@@ -1,232 +1,321 @@
 import Link from 'next/link';
 import { PLANS } from '@/lib/stripe';
 
-/* ── Pricing Card ──────────────────────────────────────────────── */
+/* ── Ticker data ─────────────────────────────────────────────── */
+const TICKER_ITEMS = [
+  'ECD = MW + APL / (0.052 × TVD)',
+  'Vogel IPR: q/qmax = 1 − 0.2(Pwf/Pr) − 0.8(Pwf/Pr)²',
+  'MAASP = (FG − MW) × 0.052 × Dshoe',
+  'KMW = MW + SIDPP / (0.052 × TVD)',
+  'Archie: Sw^n = (a·Rw) / (φ^m·Rt)',
+  'Darcy: q = k·h·ΔP / (141.2·μ·Bo·(ln(re/rw)−0.75+S))',
+  'FG = (ν/(1−ν))·(OBG−PP) + PP  [Hubbert & Willis]',
+  'PI = q / (Pr − Pwf)',
+  'ΔP = f·(L/D)·(ρv²/2)  [Darcy-Weisbach]',
+];
+
 function PricingCard({ planKey }: { planKey: keyof typeof PLANS }) {
   const plan = PLANS[planKey];
   const isPopular = 'badge' in plan && plan.badge === 'POPULAR';
   const isBest = 'badge' in plan && plan.badge === 'BEST VALUE';
-  const highlight = isPopular || isBest;
 
   return (
     <div style={{
-      position:'relative', display:'flex', flexDirection:'column',
-      borderRadius:'1.25rem', padding: highlight ? '2rem 1.75rem' : '1.75rem',
-      background: highlight ? 'linear-gradient(160deg,#7B1FA2,#4a0072)' : 'rgba(13,10,46,0.8)',
-      border: highlight ? '1px solid rgba(123,31,162,0.5)' : '1px solid rgba(92,225,230,0.1)',
-      boxShadow: highlight ? '0 0 60px rgba(123,31,162,0.25), inset 0 1px 0 rgba(255,255,255,0.1)' : 'none',
-      transform: highlight ? 'scale(1.03)' : 'scale(1)',
-      zIndex: highlight ? 1 : 0,
-    }}>
+      position: 'relative',
+      display: 'flex', flexDirection: 'column',
+      borderRadius: '16px', padding: '1.75rem',
+      background: isPopular ? 'linear-gradient(145deg, #1a0a2e, #0f0624)' : 'var(--bg-1)',
+      border: isPopular ? '1px solid rgba(232,160,32,0.4)' : '1px solid var(--border)',
+      boxShadow: isPopular ? '0 0 60px rgba(232,160,32,0.12), inset 0 1px 0 rgba(255,255,255,0.05)' : 'none',
+      transition: 'transform 0.2s, border-color 0.2s',
+    }}
+      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.borderColor = isPopular ? 'rgba(232,160,32,0.7)' : 'rgba(255,255,255,0.15)'; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = isPopular ? 'rgba(232,160,32,0.4)' : 'var(--border)'; }}
+    >
       {'badge' in plan && plan.badge && (
         <div style={{
-          position:'absolute', top:'-12px', left:'50%', transform:'translateX(-50%)',
-          padding:'4px 16px', borderRadius:'99px',
-          background: isBest ? '#F59E0B' : '#fff',
-          color: isBest ? '#78350f' : '#7B1FA2',
-          fontSize:'0.65rem', fontWeight:800, letterSpacing:'0.08em', textTransform:'uppercase',
-          fontFamily:'Syne,sans-serif', whiteSpace:'nowrap',
+          position: 'absolute', top: '-11px', left: '1.5rem',
+          padding: '3px 12px', borderRadius: '99px',
+          background: isBest ? 'var(--amber)' : 'rgba(232,160,32,0.15)',
+          border: isBest ? 'none' : '1px solid rgba(232,160,32,0.4)',
+          color: isBest ? '#000' : 'var(--amber)',
+          fontFamily: 'var(--font-mono)', fontSize: '0.6rem', fontWeight: 600,
+          letterSpacing: '0.1em', textTransform: 'uppercase',
         }}>{plan.badge}</div>
       )}
 
-      <div style={{ marginBottom:'1.25rem' }}>
-        <p style={{ fontSize:'0.68rem', fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color: highlight ? 'rgba(255,255,255,0.5)' : 'var(--cyan)', marginBottom:'0.4rem', fontFamily:'DM Mono,monospace' }}>
-          {plan.interval === 'one-time' ? 'one-time' : plan.interval}
-        </p>
-        <h3 style={{ fontFamily:'Syne,sans-serif', fontWeight:800, fontSize:'1.15rem', color:'#fff' }}>{plan.name}</h3>
-        <p style={{ fontSize:'0.8rem', color: highlight ? 'rgba(255,255,255,0.6)' : 'rgba(232,232,240,0.5)', marginTop:'0.25rem' }}>{plan.description}</p>
+      <div style={{ marginBottom: '1.25rem' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.62rem', letterSpacing: '0.1em', color: 'var(--text-3)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+          {plan.interval === 'one-time' ? '// ONE-TIME' : `// ${plan.interval.toUpperCase()}LY`}
+        </div>
+        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.15rem', color: '#fff', letterSpacing: '0.02em' }}>
+          {plan.name.toUpperCase()}
+        </div>
+        <div style={{ fontSize: '0.78rem', color: 'var(--text-3)', marginTop: '0.2rem' }}>{plan.description}</div>
       </div>
 
-      <div style={{ marginBottom:'1.5rem' }}>
-        <div style={{ display:'flex', alignItems:'baseline', gap:'6px' }}>
-          <span style={{ fontFamily:'Syne,sans-serif', fontWeight:800, fontSize:'2.5rem', color:'#fff' }}>${plan.price.toLocaleString()}</span>
-          <span style={{ fontSize:'0.8rem', color: highlight ? 'rgba(255,255,255,0.5)' : 'rgba(232,232,240,0.4)' }}>
-            {plan.interval === 'one-time' ? 'once' : `/ ${plan.interval}`}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '2.6rem', color: isPopular ? 'var(--amber)' : '#fff', letterSpacing: '-0.02em' }}>
+            ${plan.price.toLocaleString()}
+          </span>
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-3)' }}>
+            {plan.interval === 'one-time' ? 'once' : `/${plan.interval}`}
           </span>
         </div>
         {'pricePerMonth' in plan && (
-          <p style={{ fontSize:'0.72rem', color:'rgba(255,255,255,0.45)', marginTop:'2px' }}>
-            ~${plan.pricePerMonth}/mo — save 40%
-          </p>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--amber)', marginTop: '2px' }}>
+            ~${plan.pricePerMonth}/mo · saves 40%
+          </div>
         )}
       </div>
 
-      <ul style={{ listStyle:'none', padding:0, margin:'0 0 1.75rem', flex:1 }}>
-        {plan.features.map((f) => (
-          <li key={f} style={{ display:'flex', alignItems:'flex-start', gap:'10px', marginBottom:'10px' }}>
-            <svg style={{ flexShrink:0, marginTop:'2px', color: highlight ? '#5CE1E6' : '#5CE1E6' }} width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
-            <span style={{ fontSize:'0.82rem', color: highlight ? 'rgba(255,255,255,0.85)' : 'rgba(232,232,240,0.7)', lineHeight:1.5 }}>{f}</span>
+      <ul style={{ listStyle: 'none', margin: '0 0 1.75rem', padding: 0, flex: 1 }}>
+        {plan.features.map(f => (
+          <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '9px' }}>
+            <span style={{ color: 'var(--amber)', marginTop: '2px', flexShrink: 0, fontSize: '0.75rem' }}>▸</span>
+            <span style={{ fontSize: '0.82rem', color: 'var(--text-2)', lineHeight: 1.5 }}>{f}</span>
           </li>
         ))}
       </ul>
 
       <Link href={`/checkout/${planKey}`} style={{
-        display:'block', width:'100%', padding:'0.875rem', borderRadius:'0.75rem',
-        textAlign:'center', textDecoration:'none',
-        fontFamily:'Syne,sans-serif', fontWeight:700, fontSize:'0.875rem',
-        background: highlight ? '#fff' : 'rgba(123,31,162,0.35)',
-        color: highlight ? '#7B1FA2' : '#fff',
-        border: highlight ? 'none' : '1px solid rgba(123,31,162,0.5)',
-        transition:'all 0.2s',
+        display: 'block', width: '100%', padding: '0.875rem', borderRadius: '10px',
+        textAlign: 'center', textDecoration: 'none',
+        fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.85rem', letterSpacing: '0.05em',
+        background: isPopular ? 'var(--amber)' : 'rgba(255,255,255,0.06)',
+        color: isPopular ? '#000' : 'var(--text)',
+        border: isPopular ? 'none' : '1px solid var(--border)',
+        transition: 'all 0.2s',
       }}>
-        {plan.interval === 'one-time' ? 'Buy now →' : 'Start free trial →'}
+        {plan.interval === 'one-time' ? 'BUY NOW →' : 'START FREE TRIAL →'}
       </Link>
     </div>
   );
 }
 
-/* ── Main Landing Page ──────────────────────────────────────────── */
 export default function HomePage() {
+  const ticker = [...TICKER_ITEMS, ...TICKER_ITEMS];
+
   return (
-    <div style={{ background:'var(--navy)', color:'var(--text)', minHeight:'100vh' }}>
+    <div style={{ background: 'var(--bg)', color: 'var(--text)' }}>
 
-      {/* ── Hero ──────────────────────────────────────────────── */}
-      <section style={{ position:'relative', padding:'5rem 1.5rem 6rem', textAlign:'center', overflow:'hidden' }}>
-        {/* Animated grid background */}
+      {/* ── Hero ────────────────────────────────────────────── */}
+      <section style={{ position: 'relative', minHeight: 'calc(100vh - 64px)', display: 'flex', alignItems: 'center', overflow: 'hidden', padding: '4rem 1.5rem' }}>
+
+        {/* Animated seismic grid */}
         <div style={{
-          position:'absolute', inset:0, pointerEvents:'none',
-          backgroundImage:'linear-gradient(rgba(92,225,230,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(92,225,230,0.05) 1px, transparent 1px)',
-          backgroundSize:'40px 40px',
-          maskImage:'radial-gradient(ellipse 80% 60% at 50% 50%, black, transparent)',
-          WebkitMaskImage:'radial-gradient(ellipse 80% 60% at 50% 50%, black, transparent)',
-          animation:'grid-flow 8s linear infinite',
+          position: 'absolute', inset: 0, pointerEvents: 'none',
+          backgroundImage: 'linear-gradient(rgba(0,200,204,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,200,204,0.04) 1px, transparent 1px)',
+          backgroundSize: '48px 48px',
+          animation: 'grid-scroll 6s linear infinite',
+          maskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent)',
+          WebkitMaskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black, transparent)',
         }} />
-        {/* Glow orbs */}
-        <div style={{ position:'absolute', top:'-8rem', left:'50%', transform:'translateX(-50%)', width:'50rem', height:'30rem', background:'radial-gradient(ellipse at 50% 0%, rgba(123,31,162,0.35) 0%, transparent 65%)', pointerEvents:'none' }} />
-        <div style={{ position:'absolute', bottom:0, left:'20%', width:'20rem', height:'20rem', background:'radial-gradient(ellipse, rgba(92,225,230,0.08) 0%, transparent 70%)', pointerEvents:'none' }} />
 
-        <div style={{ position:'relative', maxWidth:'56rem', margin:'0 auto' }}>
-          {/* Badge */}
-          <div style={{ display:'inline-flex', alignItems:'center', gap:'8px', padding:'6px 16px', borderRadius:'99px', background:'rgba(92,225,230,0.08)', border:'1px solid rgba(92,225,230,0.2)', marginBottom:'1.5rem' }}>
-            <span style={{ width:'6px', height:'6px', borderRadius:'50%', background:'#5CE1E6', animation:'pulse-ring 2s infinite' }} />
-            <span style={{ fontSize:'0.75rem', fontWeight:600, color:'#5CE1E6', fontFamily:'DM Mono,monospace', letterSpacing:'0.05em' }}>LIVE DEMO AVAILABLE</span>
+        {/* Scan line */}
+        <div style={{
+          position: 'absolute', left: 0, right: 0, height: '1px',
+          background: 'linear-gradient(90deg, transparent, rgba(0,200,204,0.3), transparent)',
+          animation: 'scan 8s ease-in-out infinite',
+          pointerEvents: 'none',
+        }} />
+
+        {/* Glow blobs */}
+        <div style={{ position: 'absolute', top: '-10rem', right: '-5rem', width: '45rem', height: '45rem', background: 'radial-gradient(ellipse, rgba(232,160,32,0.07) 0%, transparent 65%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: '-5rem', left: '-5rem', width: '35rem', height: '35rem', background: 'radial-gradient(ellipse, rgba(0,200,204,0.05) 0%, transparent 65%)', pointerEvents: 'none' }} />
+
+        <div style={{ position: 'relative', maxWidth: '80rem', margin: '0 auto', width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', alignItems: 'center' }} className="hero-grid">
+
+          {/* Left: copy */}
+          <div>
+            <div className="animate-fade-up" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '5px 14px', borderRadius: '99px', background: 'rgba(232,160,32,0.1)', border: '1px solid rgba(232,160,32,0.2)', marginBottom: '1.5rem' }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--amber)', animation: 'pulse-amber 2s infinite' }} />
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--amber)', letterSpacing: '0.1em' }}>LIVE SYSTEM ACTIVE</span>
+            </div>
+
+            <h1 className="animate-fade-up delay-100" style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(2.5rem, 5vw, 4.5rem)', color: '#fff', lineHeight: 1.05, letterSpacing: '-0.01em', marginBottom: '1.5rem' }}>
+              THE AI SWARM<br />
+              <span style={{ color: 'var(--amber)' }}>BUILT FOR</span><br />
+              O&amp;G ENGINEERS
+            </h1>
+
+            <p className="animate-fade-up delay-200" style={{ fontSize: '1rem', color: 'var(--text-2)', maxWidth: '38rem', lineHeight: 1.75, marginBottom: '2rem' }}>
+              Hierarchical AI agents that run reservoir analysis, drilling calculations, HSE compliance, and well economics in seconds. Not another chatbot — a precision engineering instrument.
+            </p>
+
+            <div className="animate-fade-up delay-300" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
+              <Link href="/register" className="btn-amber" style={{ fontSize: '0.95rem', padding: '0.9rem 2rem' }}>
+                Start free trial →
+              </Link>
+              <a href="https://oilgas-nanobot-swarm.vibecaas.app" target="_blank" rel="noopener" className="btn-ghost" style={{ fontSize: '0.95rem', padding: '0.9rem 2rem' }}>
+                Live demo
+              </a>
+            </div>
+
+            <div className="animate-fade-up delay-400" style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
+              {['14-day money-back', 'No credit card', 'Cancel anytime'].map(t => (
+                <div key={t} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-3)', fontFamily: 'var(--font-mono)' }}>
+                  <span style={{ color: 'var(--amber)' }}>✓</span> {t}
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Headline */}
-          <h1 style={{ fontFamily:'Syne,sans-serif', fontWeight:800, fontSize:'clamp(2.5rem,6vw,4.5rem)', color:'#fff', lineHeight:1.1, marginBottom:'1.5rem', letterSpacing:'-0.02em' }}>
-            The AI Swarm Built for<br />
-            <span style={{ background:'linear-gradient(135deg,#5CE1E6,#7B1FA2)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
-              Oil &amp; Gas Engineers
-            </span>
-          </h1>
-
-          <p style={{ fontSize:'1.15rem', color:'rgba(232,232,240,0.6)', maxWidth:'42rem', margin:'0 auto 2.5rem', lineHeight:1.7 }}>
-            Hierarchical AI agents that do reservoir analysis, drilling calculations, HSE compliance, and economics — in seconds. Built for petroleum engineers.
-          </p>
-
-          <div style={{ display:'flex', gap:'1rem', justifyContent:'center', flexWrap:'wrap' }}>
-            <Link href="/register" className="btn-primary" style={{ fontSize:'1rem', padding:'1rem 2rem' }}>
-              Start free trial →
-            </Link>
-            <a href="https://oilgas-nanobot-swarm.vibecaas.app" target="_blank" rel="noopener" className="btn-outline" style={{ fontSize:'1rem', padding:'1rem 2rem' }}>
-              Live demo
-            </a>
-          </div>
-
-          {/* Social proof */}
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'1.5rem', marginTop:'2.5rem', flexWrap:'wrap' }}>
-            {['14-day money-back', 'No credit card required', 'Cancel anytime'].map((t) => (
-              <div key={t} style={{ display:'flex', alignItems:'center', gap:'6px', fontSize:'0.78rem', color:'rgba(232,232,240,0.45)' }}>
-                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#5CE1E6" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
-                {t}
+          {/* Right: terminal widget */}
+          <div className="animate-fade-up delay-200 hero-terminal" style={{ animation: 'float 5s ease-in-out infinite' }}>
+            <div style={{ background: 'var(--bg-1)', border: '1px solid var(--border)', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(232,160,32,0.08)' }}>
+              {/* Terminal bar */}
+              <div style={{ background: 'var(--bg-2)', borderBottom: '1px solid var(--border)', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '5px' }}>
+                  {['#EF4444', '#F59E0B', '#22C55E'].map(c => <div key={c} style={{ width: '10px', height: '10px', borderRadius: '50%', background: c }} />)}
+                </div>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.68rem', color: 'var(--text-3)', marginLeft: '8px' }}>swarm-console — nanobot-gateway v2.0</span>
               </div>
-            ))}
+              {/* Terminal body */}
+              <div style={{ padding: '1.25rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem', lineHeight: 1.8 }}>
+                <div style={{ color: 'rgba(0,200,204,0.7)', marginBottom: '0.5rem' }}>$ swarm run --mode hierarchical</div>
+                <div style={{ color: 'var(--text-3)' }}>▸ Queen decomposing goal...</div>
+                <div style={{ color: 'var(--text-3)' }}>▸ Dispatching L1: reservoir-analysis</div>
+                <div style={{ color: 'var(--amber)' }}>▸ Running Archie Sw calculation...</div>
+                <div style={{ color: 'var(--text-3)', marginTop: '0.75rem', borderLeft: '2px solid var(--amber)', paddingLeft: '0.75rem' }}>
+                  <div>Rt = 12.5 Ω·m</div>
+                  <div>Rw = 0.04 Ω·m</div>
+                  <div>φ  = 22.0%</div>
+                </div>
+                <div style={{ color: 'var(--green)', marginTop: '0.75rem' }}>
+                  ✓ Sw = 0.423 | Sh = 57.7%
+                </div>
+                <div style={{ color: 'var(--green)' }}>
+                  ✓ Classification: HYDROCARBON
+                </div>
+                <div style={{ marginTop: '0.5rem', color: 'var(--amber)' }}>
+                  ▸ <span style={{ animation: 'blink 1s infinite' }}>█</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ── Stats strip ───────────────────────────────────────── */}
-      <section style={{ borderTop:'1px solid rgba(92,225,230,0.08)', borderBottom:'1px solid rgba(92,225,230,0.08)', padding:'2rem 1.5rem', background:'rgba(13,10,46,0.5)' }}>
-        <div style={{ maxWidth:'56rem', margin:'0 auto', display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'1.5rem', textAlign:'center' }} className="stats-grid">
-          {[['9','Agent Teams'],['7','Engineering Tools'],['3-Tier','Architecture'],['<10s','Avg. Response']].map(([n,l]) => (
-            <div key={l}>
-              <div style={{ fontFamily:'Syne,sans-serif', fontWeight:800, fontSize:'1.75rem', color:'#5CE1E6' }}>{n}</div>
-              <div style={{ fontSize:'0.75rem', color:'rgba(232,232,240,0.5)', marginTop:'2px' }}>{l}</div>
+      {/* ── Ticker ──────────────────────────────────────────── */}
+      <div style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', padding: '0.875rem 0', background: 'var(--bg-1)', overflow: 'hidden' }}>
+        <div className="ticker-inner">
+          {ticker.map((item, i) => (
+            <span key={i} style={{ display: 'inline-flex', alignItems: 'center', padding: '0 2.5rem', fontFamily: 'var(--font-mono)', fontSize: '0.72rem', whiteSpace: 'nowrap' }}>
+              <span style={{ color: 'var(--amber)', marginRight: '0.5rem' }}>◆</span>
+              <span style={{ color: 'var(--text-3)' }}>{item}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Stats ───────────────────────────────────────────── */}
+      <section style={{ padding: '4rem 1.5rem', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: '80rem', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1px', background: 'var(--border)' }} className="stats-grid">
+          {[['9', 'Agent Teams', 'Hierarchical + Flat'], ['7', 'Eng. Tools', 'Drilling · Reservoir · Pipeline'], ['22', 'Agent Roles', 'Queen → L1 → L2 hierarchy'], ['<10s', 'Response', 'Avg. end-to-end analysis']].map(([n, l, sub]) => (
+            <div key={l} style={{ padding: '2rem 1.5rem', background: 'var(--bg)', textAlign: 'center' }}>
+              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '2.25rem', color: 'var(--amber)', letterSpacing: '-0.02em' }}>{n}</div>
+              <div style={{ fontWeight: 600, color: '#fff', fontSize: '0.875rem', marginTop: '0.25rem' }}>{l}</div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-3)', marginTop: '0.2rem', fontFamily: 'var(--font-mono)' }}>{sub}</div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ── Features ──────────────────────────────────────────── */}
-      <section style={{ padding:'5rem 1.5rem' }}>
-        <div style={{ maxWidth:'72rem', margin:'0 auto' }}>
-          <div style={{ textAlign:'center', marginBottom:'3.5rem' }}>
-            <p style={{ fontSize:'0.68rem', fontWeight:700, letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--cyan)', fontFamily:'DM Mono,monospace', marginBottom:'0.75rem' }}>WHAT MAKES PRO DIFFERENT</p>
-            <h2 style={{ fontFamily:'Syne,sans-serif', fontWeight:800, fontSize:'clamp(1.75rem,3.5vw,2.5rem)', color:'#fff', margin:'0' }}>Everything you need for modern O&amp;G engineering</h2>
+      {/* ── Features ────────────────────────────────────────── */}
+      <section style={{ padding: '5rem 1.5rem' }}>
+        <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
+          <div style={{ marginBottom: '3rem' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.12em', color: 'var(--teal)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>// ENGINEERING CAPABILITIES</div>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(1.75rem, 3vw, 2.75rem)', color: '#fff', letterSpacing: '-0.01em' }}>
+              Every calculation. Every domain.<br />
+              <span style={{ color: 'var(--amber)' }}>Automated.</span>
+            </h2>
           </div>
 
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'1.25rem' }} className="features-grid">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)' }} className="feat-grid">
             {[
-              { icon:'🔬', title:'Reservoir Analysis', desc:'Vogel IPR curves, Archie Sw, Darcy flow, material balance, decline curve analysis — automated from log data.' },
-              { icon:'⚙️', title:'Drilling Engineering', desc:'ECD, kick tolerance, MAASP, fracture gradient (Hubbert & Willis), casing design verification in real-time.' },
-              { icon:'🛢️', title:'Production Optimization', desc:'AI lift selection, waterflood surveillance, decline curve fitting, P10/P50/P90 EUR estimation.' },
-              { icon:'🔒', title:'HSE Compliance', desc:'OSHA PSM 14-element audits, BSEE SEMS, EPA Quad O LDAR, NORSOK D-010 well integrity checks.' },
-              { icon:'💰', title:'Well Economics', desc:'NPV10/IRR, AFE build-up, break-even oil price, EUR sensitivity — full economic screening.' },
-              { icon:'🏗️', title:'Pipeline Integrity', desc:'Darcy-Weisbach pressure drop, flow regime analysis, ILI anomaly ranking, MAOP verification.' },
-            ].map(({ icon, title, desc }) => (
-              <div key={title} style={{ padding:'1.5rem', borderRadius:'1rem', background:'rgba(13,10,46,0.6)', border:'1px solid rgba(92,225,230,0.08)', transition:'border-color 0.2s' }}>
-                <div style={{ fontSize:'1.75rem', marginBottom:'0.75rem' }}>{icon}</div>
-                <h3 style={{ fontFamily:'Syne,sans-serif', fontWeight:700, fontSize:'1rem', color:'#fff', marginBottom:'0.5rem' }}>{title}</h3>
-                <p style={{ fontSize:'0.82rem', color:'rgba(232,232,240,0.55)', lineHeight:1.65 }}>{desc}</p>
+              { tag: '01', title: 'Reservoir Engineering', desc: 'Vogel IPR, Darcy flow, Archie Sw, material balance, EUR estimation with P10/P50/P90.' },
+              { tag: '02', title: 'Drilling Engineering', desc: 'ECD, kick tolerance, MAASP, fracture gradient (Hubbert & Willis), mud weight window.' },
+              { tag: '03', title: 'Well Control', desc: 'Kill mud weight, MAASP, driller method kill schedule. Referenced to IADC/API standards.' },
+              { tag: '04', title: 'Production Optimization', desc: 'AI lift selection, decline curves, waterflood VRR, nodal analysis inputs.' },
+              { tag: '05', title: 'HSE Compliance', desc: 'OSHA PSM 14 elements, BSEE SEMS, EPA Quad O LDAR, NORSOK D-010 well integrity.' },
+              { tag: '06', title: 'Well Economics', desc: 'AFE build-up, NPV10/IRR, break-even oil price, EUR sensitivity matrix.' },
+            ].map(({ tag, title, desc }) => (
+              <div key={tag} style={{ padding: '2rem', background: 'var(--bg)', transition: 'background 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-1)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'var(--bg)'}
+              >
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6rem', color: 'var(--amber)', letterSpacing: '0.1em', marginBottom: '0.75rem', opacity: 0.7 }}>{tag}</div>
+                <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.05rem', color: '#fff', marginBottom: '0.6rem', letterSpacing: '0.01em' }}>{title.toUpperCase()}</h3>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-3)', lineHeight: 1.65 }}>{desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Pricing ───────────────────────────────────────────── */}
-      <section id="pricing" style={{ padding:'5rem 1.5rem' }}>
-        <div style={{ maxWidth:'80rem', margin:'0 auto' }}>
-          <div style={{ textAlign:'center', marginBottom:'3.5rem' }}>
-            <p style={{ fontSize:'0.68rem', fontWeight:700, letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--cyan)', fontFamily:'DM Mono,monospace', marginBottom:'0.75rem' }}>PRICING</p>
-            <h2 style={{ fontFamily:'Syne,sans-serif', fontWeight:800, fontSize:'clamp(1.75rem,3.5vw,2.5rem)', color:'#fff', marginBottom:'1rem' }}>Simple, transparent pricing</h2>
-            <p style={{ color:'rgba(232,232,240,0.5)', maxWidth:'32rem', margin:'0 auto', fontSize:'0.95rem' }}>From single-project campaigns to full annual Pro access. All plans include the complete engineering tool suite.</p>
+      {/* ── Pricing ─────────────────────────────────────────── */}
+      <section id="pricing" style={{ padding: '5rem 1.5rem', borderTop: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.12em', color: 'var(--teal)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>// PRICING</div>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(1.75rem, 3vw, 2.75rem)', color: '#fff', letterSpacing: '-0.01em', marginBottom: '0.75rem' }}>
+              START FREE. SCALE WITH YOUR TEAM.
+            </h2>
+            <p style={{ color: 'var(--text-3)', fontSize: '0.9rem', maxWidth: '32rem', margin: '0 auto' }}>
+              From single-project campaigns to full annual Pro access. All plans include the complete 7-tool engineering suite.
+            </p>
           </div>
 
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'1rem', alignItems:'stretch' }} className="pricing-grid">
-            {(Object.keys(PLANS) as Array<keyof typeof PLANS>).map((key) => (
-              <PricingCard key={key} planKey={key} />
-            ))}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', alignItems: 'stretch' }} className="pricing-grid">
+            {(Object.keys(PLANS) as Array<keyof typeof PLANS>).map(key => <PricingCard key={key} planKey={key} />)}
           </div>
 
-          <p style={{ textAlign:'center', marginTop:'2rem', fontSize:'0.78rem', color:'rgba(232,232,240,0.35)' }}>
-            All plans include 14-day money-back guarantee · Secure payments via Stripe · Cancel anytime
+          <p style={{ textAlign: 'center', marginTop: '2rem', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', color: 'var(--text-3)', letterSpacing: '0.05em' }}>
+            14-DAY MONEY-BACK · SECURE PAYMENT VIA STRIPE · CANCEL ANYTIME
           </p>
         </div>
       </section>
 
-      {/* ── Testimonial / Trust ────────────────────────────────── */}
-      <section style={{ padding:'4rem 1.5rem', background:'rgba(13,10,46,0.5)', borderTop:'1px solid rgba(92,225,230,0.06)' }}>
-        <div style={{ maxWidth:'56rem', margin:'0 auto', textAlign:'center' }}>
-          <div style={{ fontSize:'2.5rem', marginBottom:'1rem' }}>⚠️</div>
-          <p style={{ fontFamily:'Syne,sans-serif', fontWeight:700, fontSize:'1rem', color:'rgba(232,232,240,0.9)', marginBottom:'0.5rem' }}>Engineering Disclaimer</p>
-          <p style={{ fontSize:'0.82rem', color:'rgba(232,232,240,0.45)', lineHeight:1.7, maxWidth:'40rem', margin:'0 auto' }}>
-            OilGas Nanobot Swarm is a decision-support tool for qualified petroleum engineers. All calculations must be verified by licensed engineers before operational use. It does not replace API-certified well control training or IADC WellSharp certification.
+      {/* ── Disclaimer ──────────────────────────────────────── */}
+      <section style={{ padding: '3rem 1.5rem', borderTop: '1px solid var(--border)', background: 'var(--bg-1)' }}>
+        <div style={{ maxWidth: '48rem', margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '0.1em', color: 'var(--text-3)', textTransform: 'uppercase', marginBottom: '0.6rem' }}>⚠ ENGINEERING DISCLAIMER</div>
+          <p style={{ fontSize: '0.78rem', color: 'var(--text-3)', lineHeight: 1.7 }}>
+            OilGas Nanobot Swarm is a decision-support tool for qualified petroleum engineers. All calculations must be verified by licensed engineers before operational use. This tool does not replace API-certified well control training or IADC WellSharp certification.
           </p>
         </div>
       </section>
 
-      {/* ── CTA ───────────────────────────────────────────────── */}
-      <section style={{ padding:'5rem 1.5rem', textAlign:'center' }}>
-        <div style={{ maxWidth:'44rem', margin:'0 auto' }}>
-          <h2 style={{ fontFamily:'Syne,sans-serif', fontWeight:800, fontSize:'clamp(1.75rem,3.5vw,2.75rem)', color:'#fff', marginBottom:'1rem' }}>
-            Ready to work smarter?
+      {/* ── CTA ─────────────────────────────────────────────── */}
+      <section style={{ padding: '5rem 1.5rem', textAlign: 'center' }}>
+        <div style={{ maxWidth: '44rem', margin: '0 auto' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: 'clamp(2rem, 4vw, 3.25rem)', color: '#fff', letterSpacing: '-0.01em', marginBottom: '1rem' }}>
+            READY TO ENGINEER<br />
+            <span style={{ color: 'var(--amber)' }}>FASTER?</span>
           </h2>
-          <p style={{ color:'rgba(232,232,240,0.5)', marginBottom:'2.5rem', fontSize:'0.95rem' }}>
-            Join petroleum engineers using AI-powered analysis to accelerate their workflows.
+          <p style={{ color: 'var(--text-3)', marginBottom: '2rem', fontSize: '0.9rem', lineHeight: 1.7 }}>
+            Join petroleum engineers using AI-powered swarm intelligence to accelerate their workflows.
           </p>
-          <Link href="/register" className="btn-primary" style={{ fontSize:'1.05rem', padding:'1rem 2.5rem' }}>
+          <Link href="/register" className="btn-amber" style={{ fontSize: '1rem', padding: '1rem 2.5rem' }}>
             Create your account →
           </Link>
         </div>
       </section>
 
       <style>{`
-        @media(max-width:900px){.pricing-grid{grid-template-columns:repeat(2,1fr)!important;}}
+        @media(max-width:900px){
+          .hero-grid{grid-template-columns:1fr!important}
+          .hero-terminal{display:none}
+          .pricing-grid{grid-template-columns:repeat(2,1fr)!important}
+          .stats-grid{grid-template-columns:repeat(2,1fr)!important}
+          .feat-grid{grid-template-columns:1fr!important}
+        }
         @media(max-width:600px){
-          .pricing-grid{grid-template-columns:1fr!important;}
-          .features-grid{grid-template-columns:1fr!important;}
-          .stats-grid{grid-template-columns:repeat(2,1fr)!important;}
+          .pricing-grid{grid-template-columns:1fr!important}
+          .stats-grid{grid-template-columns:repeat(2,1fr)!important}
         }
       `}</style>
     </div>
