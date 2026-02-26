@@ -6,14 +6,13 @@ function getDb() {
   return neon(url);
 }
 
-// Execute parameterized query — call neon() as function(sql, params)
+// Execute parameterized query — neon().unsafe(sql, params)
 async function q<T extends Record<string, unknown>>(
   sql: string,
   params: unknown[] = []
 ): Promise<T[]> {
   const db = getDb();
-  // neon(url)(sql, params) returns T[] directly
-  return db(sql, ...params) as unknown as Promise<T[]>;
+  return db.unsafe(sql, params) as unknown as Promise<T[]>;
 }
 
 export interface User {
