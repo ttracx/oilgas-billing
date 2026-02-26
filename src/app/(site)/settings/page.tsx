@@ -68,9 +68,7 @@ export default async function SettingsPage() {
             { icon:'⚙️', label:'Drilling Tools', href:'https://oilgas-nanobot-swarm.vibecaas.app/#console' },
             { icon:'🏗️', label:'Agent Builder', href:'https://oilgas-nanobot-swarm.vibecaas.app/#builder' },
           ].map(({ icon, label, href }) => (
-            <a key={label} href={href} target="_blank" rel="noopener" style={{ padding:'0.875rem', borderRadius:'0.625rem', background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', textDecoration:'none', transition:'border-color 0.15s, background 0.15s', textAlign:'center' }}
-               onMouseEnter={e=>(e.currentTarget.style.borderColor='rgba(92,225,230,0.25)',e.currentTarget.style.background='rgba(92,225,230,0.04)')}
-               onMouseLeave={e=>(e.currentTarget.style.borderColor='rgba(255,255,255,0.06)',e.currentTarget.style.background='rgba(255,255,255,0.03)')}>
+            <a key={label} href={href} target="_blank" rel="noopener" className="quick-link">
               <div style={{ fontSize:'1.25rem', marginBottom:'0.35rem' }}>{icon}</div>
               <div style={{ fontSize:'0.75rem', color:'rgba(232,232,240,0.6)' }}>{label}</div>
             </a>
