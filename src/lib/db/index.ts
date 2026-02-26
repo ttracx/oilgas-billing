@@ -30,14 +30,14 @@ export interface Subscription {
 
 export async function getUserByEmail(email: string): Promise<User | null> {
   const { rows } = await sql<User>`
-    SELECT * FROM users WHERE email = ${email} LIMIT 1
+    SELECT * FROM oilgas.users WHERE email = ${email} LIMIT 1
   `;
   return rows[0] ?? null;
 }
 
 export async function getUserById(id: string): Promise<User | null> {
   const { rows } = await sql<User>`
-    SELECT * FROM users WHERE id = ${id} LIMIT 1
+    SELECT * FROM oilgas.users WHERE id = ${id} LIMIT 1
   `;
   return rows[0] ?? null;
 }
@@ -48,7 +48,7 @@ export async function createUser(
   name?: string
 ): Promise<User> {
   const { rows } = await sql<User>`
-    INSERT INTO users (email, password_hash, name)
+    INSERT INTO oilgas.users (email, password_hash, name)
     VALUES (${email}, ${passwordHash}, ${name ?? null})
     RETURNING *
   `;
@@ -60,7 +60,7 @@ export async function updateUser(
   data: { name?: string; company?: string; role?: string }
 ): Promise<User> {
   const { rows } = await sql<User>`
-    UPDATE users
+    UPDATE oilgas.users
     SET
       name    = COALESCE(${data.name ?? null}, name),
       company = COALESCE(${data.company ?? null}, company),
@@ -73,7 +73,7 @@ export async function updateUser(
 
 export async function getSubscriptionByUserId(userId: string): Promise<Subscription | null> {
   const { rows } = await sql<Subscription>`
-    SELECT * FROM subscriptions WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 1
+    SELECT * FROM oilgas.subscriptions WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 1
   `;
   return rows[0] ?? null;
 }
@@ -90,7 +90,7 @@ export async function upsertSubscription(data: {
   cancelAtPeriodEnd?: boolean;
 }): Promise<Subscription> {
   const { rows } = await sql<Subscription>`
-    INSERT INTO subscriptions (
+    INSERT INTO oilgas.subscriptions (
       user_id, stripe_customer_id, stripe_subscription_id, stripe_price_id,
       plan, status, current_period_start, current_period_end, cancel_at_period_end
     ) VALUES (
@@ -116,7 +116,7 @@ export async function upsertSubscription(data: {
 
 export async function getSubscriptionByCustomerId(customerId: string): Promise<Subscription | null> {
   const { rows } = await sql<Subscription>`
-    SELECT * FROM subscriptions WHERE stripe_customer_id = ${customerId} ORDER BY created_at DESC LIMIT 1
+    SELECT * FROM oilgas.subscriptions WHERE stripe_customer_id = ${customerId} ORDER BY created_at DESC LIMIT 1
   `;
   return rows[0] ?? null;
 }
