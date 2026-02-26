@@ -24,7 +24,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ user: { id: user.id, email: user.email, name: user.name } }, { status: 201 });
   } catch (err) {
-    console.error('Register error:', err);
-    return NextResponse.json({ error: 'Registration failed.' }, { status: 500 });
+    const msg = err instanceof Error ? `${err.name}: ${err.message}\n${err.stack?.slice(0, 500)}` : String(err);
+    console.error('Register error full:', msg);
+    return NextResponse.json({ error: 'Registration failed.', detail: msg }, { status: 500 });
   }
 }
