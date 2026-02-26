@@ -1,9 +1,11 @@
 import postgres from 'postgres';
 
 function getSql() {
-  const url = process.env.POSTGRES_URL;
-  if (!url) throw new Error('POSTGRES_URL is not set');
-  return postgres(url, { ssl: 'require', max: 1 });
+  const raw = process.env.POSTGRES_URL;
+  if (!raw) throw new Error('POSTGRES_URL is not set');
+  // Strip params unsupported by the postgres npm package (channel_binding, sslmode)
+  const url = raw.split('?')[0];
+  return postgres(url, { ssl: 'require', max: 1, connect_timeout: 10 });
 }
 
 export interface User {
