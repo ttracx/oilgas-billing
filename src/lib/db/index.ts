@@ -12,8 +12,9 @@ async function q<T extends Record<string, unknown>>(
   params: unknown[] = []
 ): Promise<T[]> {
   const db = getDb();
-  const result = await db.query(sql, params);
-  return result.rows as T[];
+  // neon().query() returns rows directly (not {rows:[...]})
+  const rows = await db.query(sql, params) as unknown as T[];
+  return rows;
 }
 
 export interface User {
