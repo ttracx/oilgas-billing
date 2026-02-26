@@ -1,8 +1,16 @@
 import Stripe from 'stripe';
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-02-25.clover',
-});
+// Lazy singleton — avoids crash during static page generation when env var is absent
+let _stripe: Stripe | null = null;
+export function getStripe(): Stripe {
+  if (!_stripe) {
+    if (!process.env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY is not set');
+    _stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2026-02-25.clover' });
+  }
+  return _stripe;
+}
+/** @deprecated Use getStripe() */
+export const stripe = { get: getStripe } as unknown as Stripe;
 
 export const PLANS = {
   campaign: {
@@ -77,9 +85,9 @@ export async function createOrRetrieveCustomer(
   email: string,
   userId: string
 ): Promise<string> {
-  const existing = await stripe.customers.list({ email, limit: 1 });
+  const existing = await getStripe().customers.list({ email, limit: 1 });
   if (existing.data.length > 0) return existing.data[0].id;
-  const customer = await stripe.customers.create({
+  const customer = await getStripe().customers.create({
     email,
     metadata: { userId },
   });
@@ -103,7 +111,7 @@ export async function createCheckoutSession({
   cancelUrl: string;
   mode: 'payment' | 'subscription';
 }) {
-  return stripe.checkout.sessions.create({
+  return getStripe().checkout.sessions.create({
     customer: customerId,
     payment_method_types: ['card'],
     mode,
@@ -122,7 +130,7 @@ export async function createBillingPortalSession(
   customerId: string,
   returnUrl: string
 ) {
-  return stripe.billingPortal.sessions.create({
+  return getStripe().billingPortal.sessions.create({
     customer: customerId,
     return_url: returnUrl,
   });
