@@ -1,6 +1,6 @@
-import { sql } from '@vercel/postgres';
+import { neon } from '@neondatabase/serverless';
 
-export { sql };
+const sql = neon(process.env.POSTGRES_URL!);
 
 export interface User {
   id: string;
@@ -19,7 +19,7 @@ export interface Subscription {
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   stripe_price_id: string | null;
-  plan: 'campaign' | 'weekly' | 'monthly' | 'annual' | null;
+  plan: string | null;
   status: string | null;
   current_period_start: Date | null;
   current_period_end: Date | null;
@@ -29,17 +29,13 @@ export interface Subscription {
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
-  const { rows } = await sql<User>`
-    SELECT * FROM oilgas.users WHERE email = ${email} LIMIT 1
-  `;
-  return rows[0] ?? null;
+  const rows = await sql`SELECT * FROM oilgas.users WHERE email = ${email} LIMIT 1`;
+  return (rows[0] as User) ?? null;
 }
 
 export async function getUserById(id: string): Promise<User | null> {
-  const { rows } = await sql<User>`
-    SELECT * FROM oilgas.users WHERE id = ${id} LIMIT 1
-  `;
-  return rows[0] ?? null;
+  const rows = await sql`SELECT * FROM oilgas.users WHERE id = ${id} LIMIT 1`;
+  return (rows[0] as User) ?? null;
 }
 
 export async function createUser(
@@ -47,19 +43,19 @@ export async function createUser(
   passwordHash: string,
   name?: string
 ): Promise<User> {
-  const { rows } = await sql<User>`
+  const rows = await sql`
     INSERT INTO oilgas.users (email, password_hash, name)
     VALUES (${email}, ${passwordHash}, ${name ?? null})
     RETURNING *
   `;
-  return rows[0];
+  return rows[0] as User;
 }
 
 export async function updateUser(
   id: string,
   data: { name?: string; company?: string; role?: string }
 ): Promise<User> {
-  const { rows } = await sql<User>`
+  const rows = await sql`
     UPDATE oilgas.users
     SET
       name    = COALESCE(${data.name ?? null}, name),
@@ -68,14 +64,16 @@ export async function updateUser(
     WHERE id = ${id}
     RETURNING *
   `;
-  return rows[0];
+  return rows[0] as User;
 }
 
 export async function getSubscriptionByUserId(userId: string): Promise<Subscription | null> {
-  const { rows } = await sql<Subscription>`
-    SELECT * FROM oilgas.subscriptions WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 1
+  const rows = await sql`
+    SELECT * FROM oilgas.subscriptions
+    WHERE user_id = ${userId}
+    ORDER BY created_at DESC LIMIT 1
   `;
-  return rows[0] ?? null;
+  return (rows[0] as Subscription) ?? null;
 }
 
 export async function upsertSubscription(data: {
@@ -89,19 +87,19 @@ export async function upsertSubscription(data: {
   currentPeriodEnd?: Date;
   cancelAtPeriodEnd?: boolean;
 }): Promise<Subscription> {
-  const { rows } = await sql<Subscription>`
+  const rows = await sql`
     INSERT INTO oilgas.subscriptions (
       user_id, stripe_customer_id, stripe_subscription_id, stripe_price_id,
       plan, status, current_period_start, current_period_end, cancel_at_period_end
     ) VALUES (
-      ${data.userId}, ${data.stripeCustomerId}, ${data.stripeSubscriptionId ?? null},
-      ${data.stripePriceId ?? null}, ${data.plan ?? null}, ${data.status},
+      ${data.userId}, ${data.stripeCustomerId},
+      ${data.stripeSubscriptionId ?? null}, ${data.stripePriceId ?? null},
+      ${data.plan ?? null}, ${data.status},
       ${data.currentPeriodStart?.toISOString() ?? null},
       ${data.currentPeriodEnd?.toISOString() ?? null},
       ${data.cancelAtPeriodEnd ?? false}
     )
-    ON CONFLICT (stripe_subscription_id)
-    DO UPDATE SET
+    ON CONFLICT (stripe_subscription_id) DO UPDATE SET
       stripe_price_id      = EXCLUDED.stripe_price_id,
       plan                 = EXCLUDED.plan,
       status               = EXCLUDED.status,
@@ -111,12 +109,14 @@ export async function upsertSubscription(data: {
       updated_at           = NOW()
     RETURNING *
   `;
-  return rows[0];
+  return rows[0] as Subscription;
 }
 
 export async function getSubscriptionByCustomerId(customerId: string): Promise<Subscription | null> {
-  const { rows } = await sql<Subscription>`
-    SELECT * FROM oilgas.subscriptions WHERE stripe_customer_id = ${customerId} ORDER BY created_at DESC LIMIT 1
+  const rows = await sql`
+    SELECT * FROM oilgas.subscriptions
+    WHERE stripe_customer_id = ${customerId}
+    ORDER BY created_at DESC LIMIT 1
   `;
-  return rows[0] ?? null;
+  return (rows[0] as Subscription) ?? null;
 }
