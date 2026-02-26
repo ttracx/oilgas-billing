@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { stripe, getPlanFromPriceId } from '@/lib/stripe';
+import { getStripe, getPlanFromPriceId } from '@/lib/stripe';
 import { upsertSubscription } from '@/lib/db';
 import type Stripe from 'stripe';
 
