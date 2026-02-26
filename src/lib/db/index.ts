@@ -40,13 +40,13 @@ export interface Subscription {
 export async function getUserByEmail(email: string): Promise<User | null> {
   const db = sql();
   const rows = (await db`SELECT * FROM oilgas.users WHERE email = ${email} LIMIT 1`) as unknown as Record<string, unknown>[];
-  return (rows[0] as User) ?? null;
+  return rows[0] as unknown as User ?? null;
 }
 
 export async function getUserById(id: string): Promise<User | null> {
   const db = sql();
   const rows = (await db`SELECT * FROM oilgas.users WHERE id = ${id} LIMIT 1`) as unknown as Record<string, unknown>[];
-  return (rows[0] as User) ?? null;
+  return rows[0] as unknown as User ?? null;
 }
 
 export async function createUser(email: string, passwordHash: string, name?: string): Promise<User> {
@@ -81,7 +81,7 @@ export async function getSubscriptionByUserId(userId: string): Promise<Subscript
   const rows = (await db`
     SELECT * FROM oilgas.subscriptions WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 1
   `) as unknown as Record<string, unknown>[];
-  return (rows[0] as Subscription) ?? null;
+  return rows[0] as unknown as Subscription ?? null;
 }
 
 export async function upsertSubscription(data: {
@@ -127,5 +127,5 @@ export async function getSubscriptionByCustomerId(customerId: string): Promise<S
   const rows = (await db`
     SELECT * FROM oilgas.subscriptions WHERE stripe_customer_id = ${customerId} ORDER BY created_at DESC LIMIT 1
   `) as unknown as Record<string, unknown>[];
-  return (rows[0] as Subscription) ?? null;
+  return rows[0] as unknown as Subscription ?? null;
 }
