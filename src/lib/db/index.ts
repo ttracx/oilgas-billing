@@ -6,15 +6,14 @@ function getDb() {
   return neon(url);
 }
 
-// Execute parameterized query — uses .query() not tagged templates
+// Execute parameterized query — call neon() as function(sql, params)
 async function q<T extends Record<string, unknown>>(
   sql: string,
   params: unknown[] = []
 ): Promise<T[]> {
   const db = getDb();
-  // neon().query() returns rows directly (not {rows:[...]})
-  const rows = await db.query(sql, params) as unknown as T[];
-  return rows;
+  // neon(url)(sql, params) returns T[] directly
+  return db(sql, ...params) as unknown as Promise<T[]>;
 }
 
 export interface User {
